@@ -4,8 +4,8 @@ FROM nginx:stable
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Check if local
-ARG configfilename
+#ARG configfilename
 
 # Overwrite the NGINX conf
-#COPY nginx.conf /etc/nginx/conf.d/
-COPY "$configfilename" /etc/nginx/conf.d/
+COPY nginx.conf /etc/nginx/conf.d/
+#COPY "$configfilename" /etc/nginx/conf.d/
