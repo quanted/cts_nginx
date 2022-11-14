@@ -1,4 +1,5 @@
-FROM nginx:stable
+# FROM nginx:stable
+FROM nginx:stable-alpine
 
 ARG config=nginx.conf
 
