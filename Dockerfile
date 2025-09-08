@@ -1,4 +1,5 @@
-FROM nginx:stable
+# FROM nginx:stable
+FROM nginx:stable-alpine3.21-slim
 
 # Remove default configuration from Nginx
 RUN rm /etc/nginx/conf.d/default.conf
