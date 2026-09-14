@@ -14,6 +14,8 @@ RUN rm -rf /usr/share/nginx/html/* && \
 
 COPY $config /etc/nginx/conf.d/
 
+COPY --from=ghcr.io/quanted/cts-django:dev-kube-8acbfcbc37fa69948db16a20c2edcc924f712760 /src/cts_app/collected_static /src/collected_static
+
 # RUN adduser -S $APP_USER -G $APP_USER && \
 # 	chown -R $APP_USER:$APP_USER /usr/share/nginx && \
 #     chown -R $APP_USER:$APP_USER /var/cache/nginx && \
