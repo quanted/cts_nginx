@@ -1,13 +1,14 @@
 # FROM nginx:stable
 # FROM nginx:stable-alpine
-FROM nginx:stable-alpine3.17-slim
+# FROM nginx:stable-alpine3.17-slim
+FROM nginx:stable-alpine3.21-slim
 
 ARG config=nginx.conf
 
 ENV APP_USER=www-data
 
-# RUN apk update && \
-# 	apk upgrade
+RUN apk update && \
+	apk upgrade
 
 RUN rm -rf /usr/share/nginx/html/* && \
 	rm /etc/nginx/conf.d/default.conf
