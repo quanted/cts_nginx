@@ -1,13 +1,20 @@
-
-name: Create and publish a Docker image
+name: Build and publish nginx image
 
 on:
   push:
-    branches: ['dev-kube', 'dev-gl']
+    branches: ['**']
+  repository_dispatch:
+    types: [django-image-updated]
+  workflow_dispatch:
+    inputs:
+      django_tag:
+        description: cts-django tag to copy static from
+        required: true
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: quanted/cts-nginx
+  CTS_NGINX_IMAGE_NAME: quanted/cts-nginx
+  CTS_DJANGO_IMAGE_NAME: quanted/cts-django
 
 jobs:
   build-and-push-image:
@@ -18,7 +25,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Resolve tags
+        id: tags
+        env:
+          PAYLOAD_TAG: ${{ github.event.client_payload.django_tag }}
+          INPUT_TAG: ${{ inputs.django_tag }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          # Dispatch payload > manual input > floating branch tag (e.g. cts-django:dev-kube)
+          DJANGO_TAG="${PAYLOAD_TAG:-${INPUT_TAG:-${GITHUB_REF_NAME//\//-}}}"
+          if [ "$EVENT" = "repository_dispatch" ]; then
+            NGINX_TAG="$DJANGO_TAG"   # nginx tag matches the django build it came from
+          else
+            NGINX_TAG="${GITHUB_REF_NAME//\//-}-${GITHUB_SHA}"
+          fi
+          echo "django_tag=$DJANGO_TAG" >> "$GITHUB_OUTPUT"
+          echo "nginx_tag=$NGINX_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Log in to the Container registry
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -31,9 +55,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.CTS_NGINX_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ github.ref_name }}-${{github.sha}}
+            type=raw,value=${{ steps.tags.outputs.nginx_tag }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -42,3 +66,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DJANGO_IMAGE=${{ env.REGISTRY }}/${{ env.CTS_DJANGO_IMAGE_NAME }}:${{ steps.tags.outputs.django_tag }}

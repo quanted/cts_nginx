@@ -1,10 +1,10 @@
-# FROM nginx:stable
-# FROM nginx:stable-alpine
-# FROM nginx:stable-alpine3.17-slim
+ARG DJANGO_IMAGE
+
+FROM ${DJANGO_IMAGE} AS django-static
+
 FROM nginx:stable-alpine3.21-slim
 
 ARG config=nginx.conf
-
 ENV APP_USER=www-data
 
 RUN apk update && \
@@ -15,17 +15,4 @@ RUN rm -rf /usr/share/nginx/html/* && \
 
 COPY $config /etc/nginx/conf.d/
 
-COPY --from=ghcr.io/quanted/cts-django:dev-kube-8acbfcbc37fa69948db16a20c2edcc924f712760 /src/cts_app/collected_static /src/collected_static
-
-# RUN adduser -S $APP_USER -G $APP_USER && \
-# 	chown -R $APP_USER:$APP_USER /usr/share/nginx && \
-#     chown -R $APP_USER:$APP_USER /var/cache/nginx && \
-#     chown -R $APP_USER:$APP_USER /var/log/nginx && \
-#     chown -R $APP_USER:$APP_USER /etc/nginx/conf.d
-
-# RUN touch /var/run/nginx.pid && \
-# 	chown -R $APP_USER:$APP_USER /var/run/nginx.pid
-
-# USER $APP_USER
-
-# CMD ["nginx", "-g", "daemon off;"]
+COPY --from=django-static /src/cts_app/collected_static /src/collected_static
